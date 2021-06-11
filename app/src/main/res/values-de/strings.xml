@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Metronom</string>
+    <string name="enter_bpm">Bitte BPM eingeben</string>
+    <string name="bpm">BPM</string>
+    <string name="enter_tact">Bitte Takt eingeben</string>
+    <string name="tact">Tact</string>
+    <string name="increase_bpm">BPM erhöhen</string>
+    <string name="increase_bpm_after">BPM erhöhen nach</string>
+    <string name="increase_bpm_by">BPM erhöhen um</string>
+    <string name="min">Min</string>
+    <string name="sec">Sek</string>
+    <string name="timer_input">Timer Input</string>
+    <string name="remaining_time">Verbleibende Zeit</string>
+    <string name="timer_help_1">Hiermit kannst du das Metron nach einer bestimmten Zeit stoppen.</string>
+    <string name="timer_help_2">0 in beiden Feldern sorgt dafür, dass das Metronom unendlich lange läuft</string>
+    <string name="select_list">Liste auswählen wenn erwünscht:</string>
+    <string name="artist">Künstler</string>
+    <string name="song">Lied</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="start_list">Liste starten</string>
+    <string name="pause">Pause</string>
+    <string name="open_list_manager">Listenmanager öffnen</string>
+    <string name="list_name">Listenname</string>
+    <string name="select_list_to_delete">Liste auswählen die du löschen willst:</string>
+    <string name="add_entry">Element hinzufügen</string>
+    <string name="save">Speichern</string>
+    <string name="new_list">Neu</string>
+    <string name="delete_selected_List">Ausgewählte Liste löschen</string>
+    <string name="ok">OK</string>
+    <string name="error">FEHLER</string>
+    <string name="err_bpm_empty">Das BPM-Feld ist leer!</string>
+    <string name="err_bpm_under_one">Die BPM müssen größer als 0 sein!</string>
+    <string name="err_not_number">" ist keine Zahl!"</string>
+</resources>

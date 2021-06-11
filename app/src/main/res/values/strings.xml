@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Metronome</string>
+    <string name="enter_bpm">Please enter BPM</string>
+    <string name="bpm">BPM</string>
+    <string name="enter_tact">Please enter Tact</string>
+    <string name="tact">Tact</string>
+    <string name="increase_bpm">Increase BPM</string>
+    <string name="increase_bpm_after">Increase BPM after</string>
+    <string name="increase_bpm_by">Increase BPM by</string>
+    <string name="min">min</string>
+    <string name="sec">sec</string>
+    <string name="timer_input">Timer input</string>
+    <string name="remaining_time">Remaining time</string>
+    <string name="timer_help_1">Use this to stop the metronome after an specific time.</string>
+    <string name="timer_help_2">"0" in both fields means the timer will run infinite.</string>
+    <string name="select_list">Select a list if wished:</string>
+    <string name="artist">Artist</string>
+    <string name="song">Song</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="start_list">Start list</string>
+    <string name="pause">Pause</string>
+    <string name="open_list_manager">Open List Manager</string>
+    <string name="list_name">List Name</string>
+    <string name="select_list_to_delete">Select a List you want to delete: </string>
+    <string name="add_entry">Add Entry</string>
+    <string name="save">Save</string>
+    <string name="new_list">New</string>
+    <string name="delete_selected_List">Delete selected List</string>
+    <string name="ok">OK</string>
+    <string name="error">ERROR</string>
+    <string name="err_bpm_empty">The BPM field is empty!</string>
+    <string name="err_bpm_under_one">The BPM has to be bigger then 0!</string>
+    <string name="err_not_number">is not a number!</string>
+</resources>
