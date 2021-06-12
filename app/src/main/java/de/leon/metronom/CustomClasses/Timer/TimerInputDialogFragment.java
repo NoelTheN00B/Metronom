@@ -1,22 +1,15 @@
 package de.leon.metronom.CustomClasses.Timer;
 
-import android.app.Activity;
-import android.app.FragmentManager;
-import android.content.DialogInterface;
 import android.widget.Toast;
 
-import androidx.fragment.app.FragmentActivity;
-
-import de.leon.metronom.MainActivity;
-import de.leon.metronom.R;
 import mobi.upod.timedurationpicker.TimeDurationPicker;
 import mobi.upod.timedurationpicker.TimeDurationPickerDialogFragment;
 import mobi.upod.timedurationpicker.TimeDurationUtil;
 
 public class TimerInputDialogFragment extends TimeDurationPickerDialogFragment {
 
-    private long duration;
-    protected MainActivity mainActivity;
+    //private long duration;
+    //protected MainActivity mainActivity;
 
     @Override
     protected long getInitialDuration() {
@@ -30,7 +23,7 @@ public class TimerInputDialogFragment extends TimeDurationPickerDialogFragment {
 
     @Override
     public void onDurationSet(TimeDurationPicker view, long duration) {
-        final String formattedDuration = TimeDurationUtil.formatHoursMinutesSeconds(duration);
+        final String formattedDuration = TimeDurationUtil.formatMinutesSeconds(duration);
         Toast.makeText(getActivity(), formattedDuration, Toast.LENGTH_LONG).show();
         //setInMain(duration);
     }
@@ -47,9 +40,8 @@ public class TimerInputDialogFragment extends TimeDurationPickerDialogFragment {
         this.mainActivity.getRemainingTime().setText(TimeDurationUtil.formatMinutesSeconds(duration));
     }
 
-     */
-
     public long getDuration() {
         return duration;
     }
+     */
 }

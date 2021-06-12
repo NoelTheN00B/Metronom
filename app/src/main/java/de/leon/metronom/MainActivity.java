@@ -1,17 +1,16 @@
 package de.leon.metronom;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.app.DialogFragment;
-import android.app.SearchManager;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.widget.Button;
-import android.widget.PopupMenu;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -19,19 +18,22 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.TimerTask;
 
-import de.leon.metronom.CustomClasses.Timer.IncreaseBpmAfterDialogFragment;
+import de.leon.metronom.CustomClasses.DataHolder.CountDownInputHolder;
+import de.leon.metronom.CustomClasses.Timer.CountDownDurationPicker;
+import de.leon.metronom.CustomClasses.Timer.IncreaseAfterDurationPicker;
 import de.leon.metronom.CustomClasses.Timer.MetronomeTimer;
-import de.leon.metronom.CustomClasses.Timer.TimerInputDialogFragment;
-import mobi.upod.timedurationpicker.TimeDurationUtil;
 
 public class MainActivity extends AppCompatActivity {
 
     private TextView enterBpmField;
     private TextView enterTactField;
-    private TextView increaseBpmAfter;
+    @SuppressLint("StaticFieldLeak")
+    public static TextView increaseBpmAfter;
     private TextView increaseBpmBy;
-    private TextView timerInput;
-    private TextView remainingTime;
+    @SuppressLint("StaticFieldLeak")
+    public static TextView timerInput;
+    @SuppressLint("StaticFieldLeak")
+    public static TextView remainingTime;
     private TextView artistFld;
     private TextView songFld;
     private SwitchMaterial switchIncreaseBPM;
@@ -40,34 +42,22 @@ public class MainActivity extends AppCompatActivity {
     private Button openListManager;
     private Button startList;
     private Button pause;
+    private ProgressBar progressBar;
 
     private int bpm = 0;
     private int tact = 4;
+    private int cntTick = 1;
     private long increaseBpmAfterInMs = 0;
     private int increaseBpmByInt = 0;
-    private long timerInputInMs = 0;
+    private long countDownInMs = 0;
+
+    private boolean isPaused = false;
+    private boolean isRunning = false;
 
     MediaPlayer mediaPlayer;
     MetronomeTimer bpmTimer = new MetronomeTimer();
+    MetronomeTimer countDownTimer = new MetronomeTimer();
     MetronomeTimer increaseBpmTimer = new MetronomeTimer();
-    TimerInputDialogFragment timerInputDialogFragment = new TimerInputDialogFragment();
-    IncreaseBpmAfterDialogFragment increaseBpmAfterDialogFragment = new IncreaseBpmAfterDialogFragment();
-
-    public void setIncreaseBpmAfterInMs(long increaseBpmAfterInMs) {
-        this.increaseBpmAfterInMs = increaseBpmAfterInMs;
-    }
-
-    public void setTimerInputInMs(long timerInputInMs) {
-        this.timerInputInMs = timerInputInMs;
-    }
-
-    public TextView getIncreaseBpmAfter() {
-        return increaseBpmAfter;
-    }
-
-    public TextView getTimerInput() {
-        return timerInput;
-    }
 
     public TextView getRemainingTime() {
         return remainingTime;
@@ -89,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
         openListManager = (Button) findViewById(R.id.btnOpenListManager);
         startList = (Button) findViewById(R.id.btnStartList);
         pause = (Button) findViewById(R.id.bntPause);
+        progressBar = (ProgressBar) findViewById(R.id.prgrsbrTact);
 
         setClickListeners();
     }
@@ -104,17 +95,19 @@ public class MainActivity extends AppCompatActivity {
         //start metronome
         start.setOnClickListener(v -> start());
 
+        //pause/resume
+        pause.setOnClickListener(v -> pause());
+
         //timer input increase after
         increaseBpmAfter.setOnClickListener(v -> {
-            timerInputDialogFragment.show(getFragmentManager(), "dialog-increase");
-            //increaseBpmAfter.setText(TimeDurationUtil.formatMinutesSeconds(increaseBpmAfterInMs));
+            Intent openDurationPickerIntent = new Intent(MainActivity.this, IncreaseAfterDurationPicker.class);
+            MainActivity.this.startActivity(openDurationPickerIntent);
         });
 
         //timer input
         timerInput.setOnClickListener(v -> {
-            timerInputDialogFragment.show(getFragmentManager(), "dialog-timer");
-            //timerInput.setText(TimeDurationUtil.formatMinutesSeconds(timerInputInMs));
-            //remainingTime.setText(TimeDurationUtil.formatMinutesSeconds(timerInputInMs));
+            Intent openDurationPickerIntent = new Intent(MainActivity.this, CountDownDurationPicker.class);
+            MainActivity.this.startActivity(openDurationPickerIntent);
         });
 
     }
@@ -178,10 +171,60 @@ public class MainActivity extends AppCompatActivity {
                 increaseBPM();
             }
 
+            countDown();
+
+            //todo led
+
+            bpmTimer.scheduleAtFixedRate(playFirstSound(), 0, 60000 / bpm);
+            isRunning = true;
+
         } else {
             alertDialog(getString(R.string.error), getString(R.string.err_bpm_empty));
         }
 
+    }
+
+    private void pause() {
+        if (isPaused) {
+            start();
+            bpmTimer.startNormalTimer();
+            isPaused = false;
+            pause.setText(getString(R.string.pause));
+        } else {
+            bpmTimer.cancel();
+            increaseBpmTimer.cancel();
+            cntTick = 1;
+            isPaused = true;
+            pause.setText(getString(R.string.resume));
+        }
+    }
+
+    private void stopAll() {
+
+    }
+
+    private void countDown() {
+
+        if (CountDownInputHolder.getInstance().getDuration() > 0) {
+            countDownInMs = CountDownInputHolder.getInstance().getDuration();
+
+            countDownTimer.scheduleAtFixedRate(pauseTimerTask(), 0, countDownInMs, this);
+        }
+
+    }
+
+    private void increaseBPM() {
+
+        increaseBpmTimer.scheduleAtFixedRate(increaseBpmTimerTask(), 0, increaseBpmAfterInMs);
+    }
+
+    private TimerTask pauseTimerTask() {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                pause();
+            }
+        };
     }
 
     private TimerTask playFirstSound() {
@@ -195,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
                     mediaPlayer.setDataSource(assetFileDescriptor.getFileDescriptor(), assetFileDescriptor.getStartOffset(), assetFileDescriptor.getLength());
                     mediaPlayer.prepare();
                     mediaPlayer.start();
+                    bpmTimer.setTask(playOtherSounds());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -219,14 +263,6 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    private void countDown() {
-
-        if (timerInputInMs > 0) {
-
-        }
-
-    }
-
     private TimerTask increaseBpmTimerTask() {
         return new TimerTask() {
             @Override
@@ -245,9 +281,6 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    private void increaseBPM() {
 
-        increaseBpmTimer.scheduleAtFixedRate(increaseBpmTimerTask(), 0, increaseBpmAfterInMs);
-    }
 
 }

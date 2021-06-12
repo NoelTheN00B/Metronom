@@ -9,7 +9,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Metronom">
-        <activity android:name=".ListManagerActivity"></activity>
+        <activity android:name=".CustomClasses.Timer.CountDownDurationPicker" />
+        <activity android:name=".CustomClasses.Timer.IncreaseAfterDurationPicker" />
+        <activity android:name=".ListManagerActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
