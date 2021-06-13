@@ -34,4 +34,9 @@
     <string name="err_not_number">is not a number!</string>
     <string name="resume">Resume</string>
     <string name="done">Done</string>
+    <string name="reset">Reset</string>
+    <string name="next">Next</string>
+    <string name="saved">Saved</string>
+    <string name="unkwn_err">UNKOWN ERROR</string>
+    <string name="err_list_name_already_taken">List name already taken</string>
 </resources>

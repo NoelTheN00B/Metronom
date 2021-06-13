@@ -4,8 +4,8 @@ public class ListEntry {
 
     private Integer listEntryNumber = null;
     private String artist = "";
-    private int bpm;
     private String song = "";
+    private int bpm;
     private int tact;
 
     public ListEntry() { }

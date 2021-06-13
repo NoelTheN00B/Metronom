@@ -35,4 +35,9 @@
     <string name="err_not_number">" ist keine Zahl!"</string>
     <string name="resume">Weiter</string>
     <string name="done">Fertig</string>
+    <string name="reset">Zurücksetzten</string>
+    <string name="next">Weiter</string>
+    <string name="saved">Gespeichert</string>
+    <string name="unkwn_err">UNBEKANNTER FEHLER</string>
+    <string name="err_list_name_already_taken">Der Listenname existiert bereits</string>
 </resources>

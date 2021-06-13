@@ -3,10 +3,7 @@ package de.leon.metronom.CustomClasses.Timer;
 import android.os.Bundle;
 import android.widget.Button;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
-import org.jetbrains.annotations.NotNull;
 
 import de.leon.metronom.CustomClasses.DataHolder.CountDownInputHolder;
 import de.leon.metronom.MainActivity;
@@ -37,19 +34,6 @@ public class CountDownDurationPicker extends AppCompatActivity {
         btnOk.setOnClickListener(v -> btnOkClickListener());
 
         btnCancel.setOnClickListener(v -> finish());
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull @NotNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putLong("inputInMs", inputInMs);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        timeDurationPicker.setDuration(savedInstanceState.getLong("inputInMs"));
-        inputInMs = savedInstanceState.getLong("inputInMs");
     }
 
     protected void btnOkClickListener() {

@@ -1,35 +1,57 @@
 package de.leon.metronom;
 
+import android.content.Context;
+import android.os.Bundle;
+import android.util.Xml;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlSerializer;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import de.leon.metronom.CustomClasses.BpmList.BpmList;
+import de.leon.metronom.CustomClasses.BpmList.ListEntry;
 
 public class ListManagerActivity extends AppCompatActivity implements ListmanagerListAdapter.ItemClickListener {
 
-    ListmanagerListAdapter adapter;
-    List<BpmList> bpmLists = new ArrayList<>();
-    BpmList selectedList;
+    private ListmanagerListAdapter adapter;
+    private List<BpmList> bpmLists = new ArrayList<>();
+    private BpmList bpmList = new BpmList();
+    private BpmList selectedList;
 
-    RecyclerView listmanagerList;
-    TextView listNameFld;
-    TextView artistFld;
-    TextView songFld;
-    TextView bpmFld;
-    TextView tactFld;
-    Button addEntryBtn;
-    Button saveBtn;
-    Button newBtn;
-    Button deleteSelectedListBtn;
+    private RecyclerView listmanagerList;
+    private TextView listNameFld;
+    private TextView artistFld;
+    private TextView songFld;
+    private TextView bpmFld;
+    private TextView tactFld;
+    private Button addEntryBtn;
+    private Button saveBtn;
+    private Button newBtn;
+    private Button deleteSelectedListBtn;
 
     private void connectAllUiElements() {
 
@@ -55,6 +77,10 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
     }
 
     private void setClickListener() {
+
+        newBtn.setOnClickListener(v -> {
+
+        });
 
     }
 
@@ -83,5 +109,132 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
     @Override
     public void onItemClick(View view, int position) {
         selectedList = adapter.getItem(position);
+    }
+
+    private void saveBpmList(String listName) {
+
+        if (loadBpmList(listName) != null) {
+            Toast.makeText(ListManagerActivity.this, getString(R.string.error) + ": " + getString(R.string.err_list_name_already_taken), Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        try {
+            FileOutputStream fileOutputStream = openFileOutput(listName, Context.MODE_APPEND);
+
+            XmlSerializer serializer = Xml.newSerializer();
+            serializer.setOutput(fileOutputStream, "UTF-8");
+            serializer.startDocument(null, Boolean.TRUE);
+            serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
+
+            serializer.startTag(null, "root");
+
+            serializer.startTag(null, "name");
+            serializer.text(bpmList.getName());
+            serializer.endTag(null, "name");
+
+            serializer.startTag(null, "entries");
+            serializer.text(bpmList.getEntries().toString());
+            serializer.endTag(null, "entries");
+
+            serializer.startTag(null, "listEntries");
+            for (ListEntry listEntry : bpmList.getListEntries()) {
+                serializer.startTag(null, "listEntry");
+
+                serializer.startTag(null, "listEntryNumber");
+                serializer.text(listEntry.getListEntryNumber() + "");
+                serializer.endTag(null, "listEntryNumber");
+
+                serializer.startTag(null, "artist");
+                serializer.text(listEntry.getArtist());
+                serializer.endTag(null, "artist");
+
+                serializer.startTag(null, "song");
+                serializer.text(listEntry.getSong());
+                serializer.endTag(null, "song");
+
+                serializer.startTag(null, "bpm");
+                serializer.text(listEntry.getBPM() + "");
+                serializer.endTag(null, "bpm");
+
+                serializer.startTag(null, "tact");
+                serializer.text(listEntry.getTact() + "");
+                serializer.endTag(null, "tact");
+
+                serializer.endTag(null, "listEntry");
+            }
+            serializer.endTag(null, "listEntries");
+
+            serializer.startTag(null, "creationDate");
+            serializer.text(bpmList.getCreationDate().toString());
+            serializer.endTag(null, "creationDate");
+
+            serializer.startTag(null, "VERSION");
+            serializer.text(bpmList.getVersion());
+            serializer.endTag(null, "VERSION");
+
+            serializer.endTag(null, "root");
+
+            serializer.endDocument();
+            serializer.flush();
+
+            fileOutputStream.close();
+
+            Toast.makeText(ListManagerActivity.this, getString(R.string.saved), Toast.LENGTH_LONG).show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(ListManagerActivity.this, getString(R.string.unkwn_err), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private BpmList loadBpmList(String fileName) {
+        BpmList bpmList = null;
+
+        try {
+            FileInputStream fileInputStream = getApplicationContext().openFileInput(fileName);
+            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+
+            char[] inputBuffer = new char[fileInputStream.available()];
+            inputStreamReader.read(inputBuffer);
+
+            String data = new String(inputBuffer);
+
+            inputStreamReader.close();
+            fileInputStream.close();
+
+            InputStream inputStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            Document document = documentBuilder.parse(inputStream);
+
+            document.getDocumentElement().normalize();
+
+            NodeList name = document.getElementsByTagName("name");
+            NodeList entries = document.getElementsByTagName("entries");
+            NodeList creationDate = document.getElementsByTagName("creationDate");
+            NodeList version = document.getElementsByTagName("VERSION"); //use later when a newer version is used
+
+            NodeList listEntriyArtits = document.getElementsByTagName("artist");
+            NodeList listEntriySongs = document.getElementsByTagName("song");
+            NodeList listEntriyBpms = document.getElementsByTagName("bpm");
+            NodeList listEntriyTacts = document.getElementsByTagName("tact");
+
+            bpmList = new BpmList(name.item(0).getNodeValue());
+            bpmList.setCreationDate(Date.valueOf(creationDate.item(0).getNodeValue()));
+            for (int i = 0; i < Integer.parseInt(entries.item(0).getNodeValue()); i++) {
+                bpmList.addListEntry(new ListEntry(
+                        Integer.parseInt(listEntriyBpms.item(i).getNodeValue()),
+                        Integer.parseInt(listEntriyTacts.item(i).getNodeValue()),
+                        listEntriyArtits.item(i).getNodeValue(),
+                        listEntriySongs.item(i).getNodeValue()));
+            }
+            inputStream.close();
+
+        } catch (IOException | ParserConfigurationException | SAXException e) {
+            e.printStackTrace();
+        }
+
+        return bpmList;
     }
 }

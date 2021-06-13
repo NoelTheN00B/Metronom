@@ -1,9 +1,8 @@
 package de.leon.metronom.CustomClasses.BpmList;
 
-import android.os.Build;
-
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class BpmList {
@@ -11,7 +10,7 @@ public class BpmList {
     private List<ListEntry> listEntries = new ArrayList<>();
     private String name;
     private Integer entries = 0;
-    private LocalDateTime creationDate;
+    private Date creationDate;
     private static final String VERSION = "1.0";
 
     public BpmList() {
@@ -58,7 +57,7 @@ public class BpmList {
     }
 
     public ListEntry getListEntry(int listPosition) {
-        return (ListEntry) this.listEntries.get(listPosition);
+        return this.listEntries.get(listPosition);
     }
 
     public BpmList getList() {
@@ -70,16 +69,18 @@ public class BpmList {
     }
 
     private void generateCreationDate() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            creationDate = LocalDateTime.now();
-        }
+        creationDate = Calendar.getInstance().getTime();
     }
 
-    public LocalDateTime getCreationDate() {
+    public Date getCreationDate() {
         return this.creationDate;
     }
 
     public Integer getEntries() {
         return entries;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
     }
 }

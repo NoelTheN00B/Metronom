@@ -3,12 +3,16 @@ package de.leon.metronom;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,16 +27,14 @@ import de.leon.metronom.CustomClasses.Timer.CountDownDurationPicker;
 import de.leon.metronom.CustomClasses.Timer.IncreaseAfterDurationPicker;
 import de.leon.metronom.CustomClasses.Timer.MetronomeTimer;
 
+@SuppressLint("StaticFieldLeak")
 public class MainActivity extends AppCompatActivity {
 
     private TextView enterBpmField;
     private TextView enterTactField;
-    @SuppressLint("StaticFieldLeak")
     public static TextView increaseBpmAfter;
     private TextView increaseBpmBy;
-    @SuppressLint("StaticFieldLeak")
     public static TextView timerInput;
-    @SuppressLint("StaticFieldLeak")
     public static TextView remainingTime;
     private TextView artistFld;
     private TextView songFld;
@@ -42,11 +44,13 @@ public class MainActivity extends AppCompatActivity {
     private Button openListManager;
     private Button startList;
     private Button pause;
+    private Button resetTimer;
     private ProgressBar progressBar;
 
     private int bpm = 0;
     private int tact = 4;
     private int cntTick = 1;
+    private int cntListEntry = 1;
     private long increaseBpmAfterInMs = 0;
     private int increaseBpmByInt = 0;
     private long countDownInMs = 0;
@@ -79,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
         openListManager = (Button) findViewById(R.id.btnOpenListManager);
         startList = (Button) findViewById(R.id.btnStartList);
         pause = (Button) findViewById(R.id.bntPause);
+        resetTimer = (Button) findViewById(R.id.btnResetTimer);
         progressBar = (ProgressBar) findViewById(R.id.prgrsbrTact);
 
         setClickListeners();
@@ -97,6 +102,27 @@ public class MainActivity extends AppCompatActivity {
 
         //pause/resume
         pause.setOnClickListener(v -> pause());
+
+        //stop
+        stop.setOnClickListener(v -> stopAll());
+
+        //start list
+        startList.setOnClickListener(v -> {
+            if (!isRunning) {
+                startList();
+            } else {
+                startList.setText(getString(R.string.next));
+                next();
+            }
+        });
+
+        //reset
+        resetTimer.setOnClickListener(v -> {
+            timerInput.setText(null);
+            remainingTime.setText(null);
+            countDownInMs = 0;
+            CountDownInputHolder.getInstance().setDuration(0);
+        });
 
         //timer input increase after
         increaseBpmAfter.setOnClickListener(v -> {
@@ -174,8 +200,10 @@ public class MainActivity extends AppCompatActivity {
             countDown();
 
             //todo led
+            progressBar.setMax(10 * tact);
+            setProgressBarColor(Color.RED);
 
-            bpmTimer.scheduleAtFixedRate(playFirstSound(), 0, 60000 / bpm);
+            bpmTimer.scheduleAtFixedRate(firstTick(), 0, 60000 / bpm);
             isRunning = true;
 
         } else {
@@ -200,7 +228,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopAll() {
+        bpmTimer.cancel();
+        increaseBpmTimer.cancel();
+        countDownTimer.cancel();
+        setProgressBarColor(Color.RED);
+        progressBar.setProgress(0);
 
+        cntTick = 1;
+        tact = 4;
+        cntListEntry = 0;
+        artistFld.setText("");
+        songFld.setText("");
+        pause.setText(getString(R.string.pause));
+        startList.setText(getString(R.string.start_list));
+        isPaused = false;
+        isRunning = false;
+    }
+
+    private void startList() {
+        //todo implement
+    }
+
+    private void next() {
+        //todo implement
     }
 
     private void countDown() {
@@ -210,7 +260,6 @@ public class MainActivity extends AppCompatActivity {
 
             countDownTimer.scheduleAtFixedRate(pauseTimerTask(), 0, countDownInMs, this);
         }
-
     }
 
     private void increaseBPM() {
@@ -227,8 +276,9 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    private TimerTask playFirstSound() {
+    private TimerTask firstTick() {
         return new TimerTask() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void run() {
 
@@ -238,15 +288,17 @@ public class MainActivity extends AppCompatActivity {
                     mediaPlayer.setDataSource(assetFileDescriptor.getFileDescriptor(), assetFileDescriptor.getStartOffset(), assetFileDescriptor.getLength());
                     mediaPlayer.prepare();
                     mediaPlayer.start();
-                    bpmTimer.setTask(playOtherSounds());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+                bpmTimer.setTask(otherTicks());
+                progressBar.setProgress(10, false);
             }
         };
     }
 
-    private TimerTask playOtherSounds() {
+    private TimerTask otherTicks() {
         return new TimerTask() {
             @Override
             public void run() {
@@ -259,6 +311,9 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+                setProgressBarColor(Color.GREEN);
+                progressBar.setProgress(progressBar.getProgress() + 10);
             }
         };
     }
@@ -279,6 +334,14 @@ public class MainActivity extends AppCompatActivity {
                 enterBpmField.setText(bpm);
             }
         };
+    }
+
+    private void setProgressBarColor(int color) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            progressBar.setProgressTintList(ColorStateList.valueOf(color));
+        } else {
+            progressBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+        }
     }
 
 
