@@ -1,6 +1,7 @@
 package de.leon.metronom;
 
 import android.annotation.SuppressLint;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.ColorStateList;
@@ -11,6 +12,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -18,10 +20,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.TimerTask;
 
+import de.leon.metronom.CustomClasses.BpmList.BpmList;
+import de.leon.metronom.CustomClasses.BpmList.ListEntry;
 import de.leon.metronom.CustomClasses.DataHolder.CountDownInputHolder;
 import de.leon.metronom.CustomClasses.Timer.CountDownDurationPicker;
 import de.leon.metronom.CustomClasses.Timer.IncreaseAfterDurationPicker;
@@ -57,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isPaused = false;
     private boolean isRunning = false;
+
+    private BpmList currentBpmList;
 
     MediaPlayer mediaPlayer;
     MetronomeTimer bpmTimer = new MetronomeTimer();
@@ -250,7 +257,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void next() {
-        //todo implement
+
+        cntListEntry++;
+
+        if (cntListEntry < currentBpmList.getEntries()) {
+
+            bpmTimer.cancel();
+            countDownTimer.cancel();
+
+            progressBar.setProgress(0);
+
+            cntTick = 1;
+
+            ListEntry currentListEntry = currentBpmList.getListEntry(cntListEntry);
+            bpm = currentListEntry.getBPM();
+            enterBpmField.setText(bpm);
+            tact = currentListEntry.getTact();
+            enterTactField.setText(tact);
+            artistFld.setText(currentListEntry.getArtist());
+            songFld.setText(currentListEntry.getSong());
+
+            isPaused = false;
+            pause.setText(R.string.pause);
+            start();
+
+        } else {
+
+            Toast.makeText(MainActivity.this, R.string.list_end_reached, Toast.LENGTH_LONG).show();
+            stopAll();
+        }
+    }
+
+    private void setListsInListManager() {
+
+        ContextWrapper contextWrapper = new ContextWrapper(this);
+        File[] files = contextWrapper.getFilesDir().listFiles();
+
     }
 
     private void countDown() {

@@ -40,4 +40,6 @@
     <string name="saved">Gespeichert</string>
     <string name="unkwn_err">UNBEKANNTER FEHLER</string>
     <string name="err_list_name_already_taken">Der Listenname existiert bereits</string>
+    <string name="list_end_reached">Ende der Liste erreicht</string>
+    <string name="err_list_name_empty">Kein Listenname angegeben</string>
 </resources>

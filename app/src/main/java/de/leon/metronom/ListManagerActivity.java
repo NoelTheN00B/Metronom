@@ -40,7 +40,7 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
     private ListmanagerListAdapter adapter;
     private List<BpmList> bpmLists = new ArrayList<>();
     private BpmList bpmList = new BpmList();
-    private BpmList selectedList;
+    private BpmList selectedList = new BpmList();
 
     private RecyclerView listmanagerList;
     private TextView listNameFld;
@@ -79,8 +79,18 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
     private void setClickListener() {
 
         newBtn.setOnClickListener(v -> {
+            bpmList = new BpmList();
 
+            listNameFld.clearComposingText();
+            bpmFld.clearComposingText();
+            tactFld.clearComposingText();
+            artistFld.clearComposingText();
+            songFld.clearComposingText();
         });
+
+        addEntryBtn.setOnClickListener(v -> addEntry());
+
+        saveBtn.setOnClickListener(v -> saveBpmList());
 
     }
 
@@ -111,7 +121,30 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
         selectedList = adapter.getItem(position);
     }
 
-    private void saveBpmList(String listName) {
+    private void addEntry() {
+
+        if (bpmList == null) {
+            bpmList = new BpmList();
+        }
+
+        bpmList.addListEntry(new ListEntry(Integer.parseInt(bpmFld.getText().toString()),
+                Integer.parseInt(tactFld.getText().toString()),
+                artistFld.getText().toString(),
+                songFld.getText().toString()));
+
+        bpmFld.setText("");
+        tactFld.setText("");
+        artistFld.setText("");
+        songFld.setText("");
+    }
+
+    private void saveBpmList() {
+
+        String listName = bpmList.getName();
+
+        if (listName.isEmpty()) {
+            Toast.makeText(ListManagerActivity.this, getString(R.string.error) + ": " + getString(R.string.err_list_name_empty), Toast.LENGTH_LONG).show();
+        }
 
         if (loadBpmList(listName) != null) {
             Toast.makeText(ListManagerActivity.this, getString(R.string.error) + ": " + getString(R.string.err_list_name_already_taken), Toast.LENGTH_LONG).show();
@@ -187,7 +220,7 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
         }
     }
 
-    private BpmList loadBpmList(String fileName) {
+    public BpmList loadBpmList(String fileName) {
         BpmList bpmList = null;
 
         try {
@@ -215,19 +248,19 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
             NodeList creationDate = document.getElementsByTagName("creationDate");
             NodeList version = document.getElementsByTagName("VERSION"); //use later when a newer version is used
 
-            NodeList listEntriyArtits = document.getElementsByTagName("artist");
-            NodeList listEntriySongs = document.getElementsByTagName("song");
-            NodeList listEntriyBpms = document.getElementsByTagName("bpm");
-            NodeList listEntriyTacts = document.getElementsByTagName("tact");
+            NodeList listEntryArtits = document.getElementsByTagName("artist");
+            NodeList listEntrySongs = document.getElementsByTagName("song");
+            NodeList listEntryBpms = document.getElementsByTagName("bpm");
+            NodeList listEntryTacts = document.getElementsByTagName("tact");
 
             bpmList = new BpmList(name.item(0).getNodeValue());
             bpmList.setCreationDate(Date.valueOf(creationDate.item(0).getNodeValue()));
             for (int i = 0; i < Integer.parseInt(entries.item(0).getNodeValue()); i++) {
                 bpmList.addListEntry(new ListEntry(
-                        Integer.parseInt(listEntriyBpms.item(i).getNodeValue()),
-                        Integer.parseInt(listEntriyTacts.item(i).getNodeValue()),
-                        listEntriyArtits.item(i).getNodeValue(),
-                        listEntriySongs.item(i).getNodeValue()));
+                        Integer.parseInt(listEntryBpms.item(i).getNodeValue()),
+                        Integer.parseInt(listEntryTacts.item(i).getNodeValue()),
+                        listEntryArtits.item(i).getNodeValue(),
+                        listEntrySongs.item(i).getNodeValue()));
             }
             inputStream.close();
 

@@ -39,4 +39,6 @@
     <string name="saved">Saved</string>
     <string name="unkwn_err">UNKOWN ERROR</string>
     <string name="err_list_name_already_taken">List name already taken</string>
+    <string name="list_end_reached">Reached end of list</string>
+    <string name="err_list_name_empty">No list name given</string>
 </resources>
