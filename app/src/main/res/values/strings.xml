@@ -31,6 +31,7 @@
     <string name="error">ERROR</string>
     <string name="err_bpm_empty">The BPM field is empty!</string>
     <string name="err_bpm_under_one">The BPM has to be bigger then 0!</string>
+    <string name="err_tact_under_one">The Tact has to be bigger then 0!</string>
     <string name="err_not_number">is not a number!</string>
     <string name="resume">Resume</string>
     <string name="done">Done</string>

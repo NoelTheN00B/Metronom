@@ -59,8 +59,8 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
         listNameFld = (TextView) findViewById(R.id.txtFldListName);
         artistFld = (TextView) findViewById(R.id.txtFldArtist);
         songFld = (TextView) findViewById(R.id.txtFldSong);
-        bpmFld = (TextView) findViewById(R.id.txtFldBPM);
-        tactFld = (TextView) findViewById(R.id.txtFldTact);
+        bpmFld = (TextView) findViewById(R.id.txtFldBpmListEntry);
+        tactFld = (TextView) findViewById(R.id.txtFldTactListEntry);
         addEntryBtn = (Button) findViewById(R.id.btnAddEntry);
         saveBtn = (Button) findViewById(R.id.btnSave);
         newBtn = (Button) findViewById(R.id.btnNew);
@@ -81,11 +81,13 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
         newBtn.setOnClickListener(v -> {
             bpmList = new BpmList();
 
-            listNameFld.clearComposingText();
-            bpmFld.clearComposingText();
-            tactFld.clearComposingText();
-            artistFld.clearComposingText();
-            songFld.clearComposingText();
+            try {
+                listNameFld.clearComposingText();
+                bpmFld.clearComposingText();
+                tactFld.clearComposingText();
+                artistFld.clearComposingText();
+                songFld.clearComposingText();
+            } catch (Exception ignore) {}
         });
 
         addEntryBtn.setOnClickListener(v -> addEntry());
@@ -132,6 +134,10 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
                 artistFld.getText().toString(),
                 songFld.getText().toString()));
 
+        if (bpmList.getName() == null || bpmList.getName().isEmpty() || bpmList.getName() != listNameFld.getText()) {
+            bpmList.setName(listNameFld.getText().toString());
+        }
+
         bpmFld.setText("");
         tactFld.setText("");
         artistFld.setText("");
@@ -152,7 +158,7 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
         }
 
         try {
-            FileOutputStream fileOutputStream = openFileOutput(listName, Context.MODE_APPEND);
+            FileOutputStream fileOutputStream = openFileOutput(listName + ".xml", Context.MODE_APPEND);
 
             XmlSerializer serializer = Xml.newSerializer();
             serializer.setOutput(fileOutputStream, "UTF-8");
@@ -224,7 +230,7 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
         BpmList bpmList = null;
 
         try {
-            FileInputStream fileInputStream = getApplicationContext().openFileInput(fileName);
+            FileInputStream fileInputStream = getApplicationContext().openFileInput(fileName + ".xml");
             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
 
             char[] inputBuffer = new char[fileInputStream.available()];

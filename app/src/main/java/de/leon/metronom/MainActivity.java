@@ -14,7 +14,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,12 +21,16 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.TimerTask;
 
 import de.leon.metronom.CustomClasses.BpmList.BpmList;
 import de.leon.metronom.CustomClasses.BpmList.ListEntry;
+import de.leon.metronom.CustomClasses.CustomExceptions.BpmNegativeException;
+import de.leon.metronom.CustomClasses.CustomExceptions.BpmNotAnIntegerException;
+import de.leon.metronom.CustomClasses.CustomExceptions.BpmNullException;
+import de.leon.metronom.CustomClasses.CustomExceptions.TactNotAnIntegerException;
 import de.leon.metronom.CustomClasses.DataHolder.CountDownInputHolder;
+import de.leon.metronom.CustomClasses.Logic.MainLogic;
 import de.leon.metronom.CustomClasses.Timer.CountDownDurationPicker;
 import de.leon.metronom.CustomClasses.Timer.IncreaseAfterDurationPicker;
 import de.leon.metronom.CustomClasses.Timer.MetronomeTimer;
@@ -52,13 +55,14 @@ public class MainActivity extends AppCompatActivity {
     private Button resetTimer;
     private ProgressBar progressBar;
 
+    private MainLogic logic;
+
     private int bpm = 0;
     private int tact = 4;
     private int cntTick = 1;
     private int cntListEntry = 1;
     private long increaseBpmAfterInMs = 0;
     private int increaseBpmByInt = 0;
-    private long countDownInMs = 0;
 
     private boolean isPaused = false;
     private boolean isRunning = false;
@@ -67,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
 
     MediaPlayer mediaPlayer;
     MetronomeTimer bpmTimer = new MetronomeTimer();
-    MetronomeTimer countDownTimer = new MetronomeTimer();
     MetronomeTimer increaseBpmTimer = new MetronomeTimer();
 
     public TextView getRemainingTime() {
@@ -127,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         resetTimer.setOnClickListener(v -> {
             timerInput.setText(null);
             remainingTime.setText(null);
-            countDownInMs = 0;
+            logic.setCountDownInMs(0);
             CountDownInputHolder.getInstance().setDuration(0);
         });
 
@@ -159,6 +162,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        logic = new MainLogic();
+
         connectAllUiElements();
     }
 
@@ -174,62 +179,32 @@ public class MainActivity extends AppCompatActivity {
 
     private void start() {
 
-        if (!enterBpmField.getText().toString().isEmpty()) {
+        try {
+            logic.start(enterBpmField.getText().toString(),
+                    enterTactField.getText().toString(),
+                    switchIncreaseBPM.isActivated()
+                            && increaseBpmAfter.getText() != null
+                            && increaseBpmBy.getText() != null);
 
-            try {
-                bpm = Integer.parseInt(enterBpmField.getText().toString());
-            } catch (Exception e) {
-                alertDialog(getString(R.string.error), enterBpmField.getText() + getString(R.string.err_not_number));
-                System.out.println(Arrays.toString(e.getStackTrace()));
-            }
-
-            if (bpm <= 0) {
-                alertDialog(getString(R.string.error), getString(R.string.err_bpm_under_one));
-                return;
-            }
-
-            if (enterTactField.getText().toString().isEmpty()) {
-                tact = 4;
-            } else {
-                try {
-                    tact = Integer.parseInt(enterTactField.getText().toString());
-                } catch (Exception e) {
-                    alertDialog(getString(R.string.error), enterTactField.getText() + getString(R.string.err_not_number));
-                    System.out.println(Arrays.toString(e.getStackTrace()));
-                }
-                return;
-            }
-
-            if (switchIncreaseBPM.isActivated() || switchIncreaseBPM.isChecked()) {
-                increaseBPM();
-            }
-
-            countDown();
-
-            //todo led
-            progressBar.setMax(10 * tact);
-            setProgressBarColor(Color.RED);
-
-            bpmTimer.scheduleAtFixedRate(firstTick(), 0, 60000 / bpm);
-            isRunning = true;
-
-        } else {
+        } catch (BpmNullException e) {
             alertDialog(getString(R.string.error), getString(R.string.err_bpm_empty));
+        } catch (BpmNotAnIntegerException e) {
+            alertDialog(getString(R.string.error), enterBpmField.getText().toString() + getString(R.string.err_not_number));
+        } catch (BpmNegativeException e) {
+            alertDialog(getString(R.string.error), getString(R.string.err_bpm_under_one));
+        } catch (TactNotAnIntegerException e) {
+            alertDialog(getString(R.string.error), enterTactField.getText().toString() + getString(R.string.err_not_number));
         }
 
     }
 
     private void pause() {
-        if (isPaused) {
-            start();
-            bpmTimer.startNormalTimer();
-            isPaused = false;
+
+        MainLogic.PauseButtonStatus status = logic.pause();
+
+        if (status.equals(MainLogic.PauseButtonStatus.pauseButton)) {
             pause.setText(getString(R.string.pause));
         } else {
-            bpmTimer.cancel();
-            increaseBpmTimer.cancel();
-            cntTick = 1;
-            isPaused = true;
             pause.setText(getString(R.string.resume));
         }
     }
@@ -237,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
     private void stopAll() {
         bpmTimer.cancel();
         increaseBpmTimer.cancel();
-        countDownTimer.cancel();
+        logic.getCountDownTimer().cancel();
         setProgressBarColor(Color.RED);
         progressBar.setProgress(0);
 
@@ -263,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
         if (cntListEntry < currentBpmList.getEntries()) {
 
             bpmTimer.cancel();
-            countDownTimer.cancel();
+            logic.getCountDownTimer().cancel();
 
             progressBar.setProgress(0);
 
@@ -295,20 +270,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void countDown() {
-
-        if (CountDownInputHolder.getInstance().getDuration() > 0) {
-            countDownInMs = CountDownInputHolder.getInstance().getDuration();
-
-            countDownTimer.scheduleAtFixedRate(pauseTimerTask(), 0, countDownInMs, this);
-        }
-    }
-
-    private void increaseBPM() {
-
-        increaseBpmTimer.scheduleAtFixedRate(increaseBpmTimerTask(), 0, increaseBpmAfterInMs);
-    }
-
     private TimerTask pauseTimerTask() {
         return new TimerTask() {
             @Override
@@ -320,7 +281,6 @@ public class MainActivity extends AppCompatActivity {
 
     private TimerTask firstTick() {
         return new TimerTask() {
-            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void run() {
 
@@ -335,7 +295,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 bpmTimer.setTask(otherTicks());
-                progressBar.setProgress(10, false);
+                setProgressBarColor(Color.RED);
+                progressBar.setProgress(10);
             }
         };
     }

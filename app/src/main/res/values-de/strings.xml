@@ -32,6 +32,7 @@
     <string name="error">FEHLER</string>
     <string name="err_bpm_empty">Das BPM-Feld ist leer!</string>
     <string name="err_bpm_under_one">Die BPM müssen größer als 0 sein!</string>
+    <string name="err_tact_under_one">Der Takt muss größer als 0 sein!</string>
     <string name="err_not_number">" ist keine Zahl!"</string>
     <string name="resume">Weiter</string>
     <string name="done">Fertig</string>
