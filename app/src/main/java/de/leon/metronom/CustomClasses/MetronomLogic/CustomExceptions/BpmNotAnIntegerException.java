@@ -1,6 +1,6 @@
-package de.leon.metronom.CustomClasses.CustomExceptions;
+package de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions;
 
-public class BpmNotAnIntegerException extends BpmInvalidException {
+public class BpmNotAnIntegerException extends NotAnIntegerException {
 
     public BpmNotAnIntegerException() {
         super();

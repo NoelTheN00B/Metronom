@@ -1,4 +1,4 @@
-package de.leon.metronom.CustomClasses.BpmList;
+package de.leon.metronom.CustomClasses.MetronomLogic.BpmList;
 
 public class ListEntry {
 
@@ -18,7 +18,7 @@ public class ListEntry {
     }
 
     public ListEntry(int bpm, int tact) {
-        new ListEntry(bpm, tact, null, null);
+        this(bpm, tact, null, null);
     }
 
     public int getListEntryNumber() {

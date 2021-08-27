@@ -21,16 +21,17 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.TimerTask;
 
-import de.leon.metronom.CustomClasses.BpmList.BpmList;
-import de.leon.metronom.CustomClasses.BpmList.ListEntry;
-import de.leon.metronom.CustomClasses.CustomExceptions.BpmNegativeException;
-import de.leon.metronom.CustomClasses.CustomExceptions.BpmNotAnIntegerException;
-import de.leon.metronom.CustomClasses.CustomExceptions.BpmNullException;
-import de.leon.metronom.CustomClasses.CustomExceptions.TactNotAnIntegerException;
 import de.leon.metronom.CustomClasses.DataHolder.CountDownInputHolder;
-import de.leon.metronom.CustomClasses.Logic.MainLogic;
+import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.BpmNegativeException;
+import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.BpmNotAnIntegerException;
+import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.BpmNullException;
+import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.ListEndReachedException;
+import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.NotAnIntegerException;
+import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.TactNotAnIntegerException;
+import de.leon.metronom.CustomClasses.MetronomLogic.MainLogic;
 import de.leon.metronom.CustomClasses.Timer.CountDownDurationPicker;
 import de.leon.metronom.CustomClasses.Timer.IncreaseAfterDurationPicker;
 import de.leon.metronom.CustomClasses.Timer.MetronomeTimer;
@@ -56,22 +57,11 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
 
     private MainLogic logic;
-
-    private int bpm = 0;
-    private int tact = 4;
-    private int cntTick = 1;
-    private int cntListEntry = 1;
-    private long increaseBpmAfterInMs = 0;
-    private int increaseBpmByInt = 0;
-
-    private boolean isPaused = false;
-    private boolean isRunning = false;
-
-    private BpmList currentBpmList;
-
     MediaPlayer mediaPlayer;
+
     MetronomeTimer bpmTimer = new MetronomeTimer();
     MetronomeTimer increaseBpmTimer = new MetronomeTimer();
+    MetronomeTimer countDownTimer = new MetronomeTimer();
 
     public TextView getRemainingTime() {
         return remainingTime;
@@ -118,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
 
         //start list
         startList.setOnClickListener(v -> {
-            if (!isRunning) {
+            if (!logic.isRunning()) {
                 startList();
             } else {
                 startList.setText(getString(R.string.next));
@@ -171,7 +161,8 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle(title);
         dialog.setMessage(msg);
-        dialog.setNeutralButton(getString(R.string.ok), (nBtnDialog, which) -> { });
+        dialog.setNeutralButton(getString(R.string.ok), (nBtnDialog, which) -> {
+        });
         AlertDialog alertDialog = dialog.create();
         alertDialog.show();
 
@@ -179,12 +170,26 @@ public class MainActivity extends AppCompatActivity {
 
     private void start() {
 
+        boolean increase = switchIncreaseBPM.isActivated()
+                && increaseBpmAfter.getText() != null
+                && increaseBpmBy.getText() != null;
+
         try {
             logic.start(enterBpmField.getText().toString(),
                     enterTactField.getText().toString(),
-                    switchIncreaseBPM.isActivated()
-                            && increaseBpmAfter.getText() != null
-                            && increaseBpmBy.getText() != null);
+                    increase);
+
+            bpmTimer.scheduleAtFixedRate(firstTick(), 0, 60000 / logic.getBpm());
+
+            if (increase) {
+                increaseBPM();
+            }
+
+            countDown();
+
+            //todo led
+            progressBar.setMax(10 * logic.getTact());
+            setProgressBarColor(Color.RED);
 
         } catch (BpmNullException e) {
             alertDialog(getString(R.string.error), getString(R.string.err_bpm_empty));
@@ -200,31 +205,30 @@ public class MainActivity extends AppCompatActivity {
 
     private void pause() {
 
-        MainLogic.PauseButtonStatus status = logic.pause();
+        MainLogic.PauseMethodNextCall status = logic.pause();
 
-        if (status.equals(MainLogic.PauseButtonStatus.pauseButton)) {
+        if (status.equals(MainLogic.PauseMethodNextCall.PAUSE)) {
+            bpmTimer.startNormalTimer();
+            start();
             pause.setText(getString(R.string.pause));
         } else {
+            bpmTimer.cancel();
+            increaseBpmTimer.cancel();
             pause.setText(getString(R.string.resume));
         }
     }
 
     private void stopAll() {
+
         bpmTimer.cancel();
         increaseBpmTimer.cancel();
-        logic.getCountDownTimer().cancel();
+        countDownTimer.cancel();
         setProgressBarColor(Color.RED);
         progressBar.setProgress(0);
-
-        cntTick = 1;
-        tact = 4;
-        cntListEntry = 0;
         artistFld.setText("");
         songFld.setText("");
         pause.setText(getString(R.string.pause));
         startList.setText(getString(R.string.start_list));
-        isPaused = false;
-        isRunning = false;
     }
 
     private void startList() {
@@ -233,34 +237,37 @@ public class MainActivity extends AppCompatActivity {
 
     private void next() {
 
-        cntListEntry++;
-
-        if (cntListEntry < currentBpmList.getEntries()) {
+        try {
+            HashMap<MainLogic.TextFields, String> hashMap = logic.next();
 
             bpmTimer.cancel();
-            logic.getCountDownTimer().cancel();
+            countDownTimer.cancel();
 
             progressBar.setProgress(0);
-
-            cntTick = 1;
-
-            ListEntry currentListEntry = currentBpmList.getListEntry(cntListEntry);
-            bpm = currentListEntry.getBPM();
-            enterBpmField.setText(bpm);
-            tact = currentListEntry.getTact();
-            enterTactField.setText(tact);
-            artistFld.setText(currentListEntry.getArtist());
-            songFld.setText(currentListEntry.getSong());
-
-            isPaused = false;
+            enterBpmField.setText(hashMap.get(MainLogic.TextFields.BPM));
+            enterTactField.setText(hashMap.get(MainLogic.TextFields.TACT));
+            artistFld.setText(hashMap.get(MainLogic.TextFields.ARTIST));
+            songFld.setText(hashMap.get(MainLogic.TextFields.SONG));
             pause.setText(R.string.pause);
             start();
 
-        } else {
-
+        } catch (ListEndReachedException e) {
             Toast.makeText(MainActivity.this, R.string.list_end_reached, Toast.LENGTH_LONG).show();
-            stopAll();
         }
+    }
+
+    private void countDown() {
+
+        if (CountDownInputHolder.getInstance().getDuration() > 0) {
+            logic.setCountDownInMs(CountDownInputHolder.getInstance().getDuration());
+
+            countDownTimer.scheduleAtFixedRate(pauseTimerTask(), 0, logic.getCountDownInMs(), this);
+        }
+    }
+
+    private void increaseBPM() {
+
+        increaseBpmTimer.scheduleAtFixedRate(increaseBpmTimerTask(), 0, logic.getIncreaseBpmAfterInMs(), this);
     }
 
     private void setListsInListManager() {
@@ -270,22 +277,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private TimerTask pauseTimerTask() {
-        return new TimerTask() {
-            @Override
-            public void run() {
-                pause();
-            }
-        };
-    }
-
     private TimerTask firstTick() {
         return new TimerTask() {
             @Override
             public void run() {
 
                 try {
-                    AssetFileDescriptor assetFileDescriptor = getAssets().openFd("first_tick.wav");
+                    AssetFileDescriptor assetFileDescriptor = getAssets().openFd(logic.getFirstTickFileName());
                     mediaPlayer = new MediaPlayer();
                     mediaPlayer.setDataSource(assetFileDescriptor.getFileDescriptor(), assetFileDescriptor.getStartOffset(), assetFileDescriptor.getLength());
                     mediaPlayer.prepare();
@@ -306,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    AssetFileDescriptor assetFileDescriptor = getAssets().openFd("other_ticks.wav");
+                    AssetFileDescriptor assetFileDescriptor = getAssets().openFd(logic.getOtherTicksFileName());
                     mediaPlayer = new MediaPlayer();
                     mediaPlayer.setDataSource(assetFileDescriptor.getFileDescriptor(), assetFileDescriptor.getStartOffset(), assetFileDescriptor.getLength());
                     mediaPlayer.prepare();
@@ -321,20 +319,26 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
+    private TimerTask pauseTimerTask() {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                logic.pauseTimerTaskLogic();
+            }
+        };
+    }
+
     private TimerTask increaseBpmTimerTask() {
         return new TimerTask() {
             @Override
             public void run() {
                 try {
-                    increaseBpmByInt = Integer.parseInt(increaseBpmBy.getText().toString());
-                } catch (Exception e) {
+                    int newBPM = logic.increaseBpmTimerTaskLogic(increaseBpmBy.getText().toString());
+                    bpmTimer.setPeriod(60000 / newBPM);
+                    enterBpmField.setText(newBPM);
+                } catch (NotAnIntegerException e) {
                     alertDialog(getString(R.string.error), increaseBpmBy.getText() + getString(R.string.err_not_number));
-                    return;
                 }
-
-                bpm += increaseBpmByInt;
-                bpmTimer.setPeriod(60000 / bpm);
-                enterBpmField.setText(bpm);
             }
         };
     }
@@ -346,7 +350,6 @@ public class MainActivity extends AppCompatActivity {
             progressBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
         }
     }
-
 
 
 }

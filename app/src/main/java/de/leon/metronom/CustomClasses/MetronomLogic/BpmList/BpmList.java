@@ -1,4 +1,4 @@
-package de.leon.metronom.CustomClasses.BpmList;
+package de.leon.metronom.CustomClasses.MetronomLogic.BpmList;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -8,23 +8,27 @@ import java.util.List;
 public class BpmList {
 
     private List<ListEntry> listEntries = new ArrayList<>();
-    private String name;
+    private String name = "New List";
     private Integer entries = 0;
     private Date creationDate;
     private static final String VERSION = "1.0";
 
     public BpmList() {
-        generateCreationDate();
+        this(null, null);
     }
 
     public BpmList(String name) {
-        setName(name);
-        generateCreationDate();
+        this(name, null);
+    }
+
+    public BpmList(List<ListEntry> listEntries) {
+        this(null, listEntries);
     }
 
     public BpmList(String name, List<ListEntry> listEntries) {
-        setName(name);
-        setListEntries(listEntries);
+        this.entries = 0;
+        this.listEntries = listEntries;
+        this.name = name == null ? "New List" : name;
         generateCreationDate();
     }
 
@@ -49,6 +53,8 @@ public class BpmList {
     }
 
     public void setListEntries(List<ListEntry> listEntries) {
+        this.listEntries = new ArrayList<>();
+        this.entries = 0;
         addListEntries(listEntries);
     }
 

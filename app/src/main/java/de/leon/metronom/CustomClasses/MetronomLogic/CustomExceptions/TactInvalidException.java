@@ -1,4 +1,4 @@
-package de.leon.metronom.CustomClasses.CustomExceptions;
+package de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions;
 
 public class TactInvalidException extends MetronomException {
 

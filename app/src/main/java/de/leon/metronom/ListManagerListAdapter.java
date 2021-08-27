@@ -10,16 +10,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-import de.leon.metronom.CustomClasses.BpmList.BpmList;
+import de.leon.metronom.CustomClasses.MetronomLogic.BpmList.BpmList;
 
-public class ListmanagerListAdapter extends RecyclerView.Adapter<ListmanagerListAdapter.ViewHolder> {
+public class ListManagerListAdapter extends RecyclerView.Adapter<ListManagerListAdapter.ViewHolder> {
 
     private List<BpmList> mData;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    ListmanagerListAdapter(Context context, List<BpmList> data) {
+    ListManagerListAdapter(Context context, List<BpmList> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }

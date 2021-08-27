@@ -1,6 +1,6 @@
-package de.leon.metronom.CustomClasses.CustomExceptions;
+package de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions;
 
-public class TactNotAnIntegerException extends TactInvalidException {
+public class TactNotAnIntegerException extends NotAnIntegerException {
 
     public TactNotAnIntegerException() {
         super();

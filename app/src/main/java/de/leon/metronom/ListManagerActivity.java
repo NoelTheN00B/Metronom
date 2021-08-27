@@ -25,22 +25,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import de.leon.metronom.CustomClasses.BpmList.BpmList;
-import de.leon.metronom.CustomClasses.BpmList.ListEntry;
+import de.leon.metronom.CustomClasses.MetronomLogic.BpmList.BpmList;
+import de.leon.metronom.CustomClasses.MetronomLogic.BpmList.ListEntry;
+import de.leon.metronom.CustomClasses.MetronomLogic.ListManagerLogic;
 
-public class ListManagerActivity extends AppCompatActivity implements ListmanagerListAdapter.ItemClickListener {
+public class ListManagerActivity extends AppCompatActivity implements ListManagerListAdapter.ItemClickListener {
 
-    private ListmanagerListAdapter adapter;
-    private List<BpmList> bpmLists = new ArrayList<>();
-    private BpmList bpmList = new BpmList();
-    private BpmList selectedList = new BpmList();
+    private ListManagerListAdapter adapter;
+    private ListManagerLogic logic;
 
     private RecyclerView listmanagerList;
     private TextView listNameFld;
@@ -67,7 +64,7 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
         deleteSelectedListBtn = (Button) findViewById(R.id.btnDeleteSelectedList);
 
         listmanagerList.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ListmanagerListAdapter(this, bpmLists);
+        adapter = new ListManagerListAdapter(this, logic.getBpmLists());
         adapter.setClickListener(this);
         listmanagerList.setAdapter(adapter);
         //DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(listmanagerList.getContext(), getRequestedOrientation());
@@ -79,7 +76,7 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
     private void setClickListener() {
 
         newBtn.setOnClickListener(v -> {
-            bpmList = new BpmList();
+            logic.setBpmList(new BpmList());
 
             try {
                 listNameFld.clearComposingText();
@@ -104,7 +101,7 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
         connectAllUiElements();
 
         listmanagerList.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ListmanagerListAdapter(this, bpmLists);
+        adapter = new ListManagerListAdapter(this, logic.getBpmLists());
         adapter.setClickListener(this);
         listmanagerList.setAdapter(adapter);
         //DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(listmanagerList.getContext(), getRequestedOrientation());
@@ -115,28 +112,21 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
     protected void onStart() {
         super.onStart();
 
+        logic = new ListManagerLogic();
+
         connectAllUiElements();
     }
 
     @Override
     public void onItemClick(View view, int position) {
-        selectedList = adapter.getItem(position);
+        logic.setSelectedList(adapter.getItem(position));
     }
 
     private void addEntry() {
 
-        if (bpmList == null) {
-            bpmList = new BpmList();
-        }
-
-        bpmList.addListEntry(new ListEntry(Integer.parseInt(bpmFld.getText().toString()),
-                Integer.parseInt(tactFld.getText().toString()),
-                artistFld.getText().toString(),
-                songFld.getText().toString()));
-
-        if (bpmList.getName() == null || bpmList.getName().isEmpty() || bpmList.getName() != listNameFld.getText()) {
-            bpmList.setName(listNameFld.getText().toString());
-        }
+        logic.addEntry(bpmFld.getText().toString(), tactFld.getText().toString(),
+                artistFld.getText().toString(), songFld.getText().toString(),
+                listNameFld.getText().toString());
 
         bpmFld.setText("");
         tactFld.setText("");
@@ -146,19 +136,19 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
 
     private void saveBpmList() {
 
-        String listName = bpmList.getName();
+        BpmList listToSave = logic.getBpmList();
 
-        if (listName.isEmpty()) {
+        if (listToSave.getName().isEmpty()) {
             Toast.makeText(ListManagerActivity.this, getString(R.string.error) + ": " + getString(R.string.err_list_name_empty), Toast.LENGTH_LONG).show();
         }
 
-        if (loadBpmList(listName) != null) {
+        if (loadBpmList(listToSave.getName()) != null) {
             Toast.makeText(ListManagerActivity.this, getString(R.string.error) + ": " + getString(R.string.err_list_name_already_taken), Toast.LENGTH_LONG).show();
             return;
         }
 
         try {
-            FileOutputStream fileOutputStream = openFileOutput(listName + ".xml", Context.MODE_APPEND);
+            FileOutputStream fileOutputStream = openFileOutput(listToSave.getName() + ".xml", Context.MODE_APPEND);
 
             XmlSerializer serializer = Xml.newSerializer();
             serializer.setOutput(fileOutputStream, "UTF-8");
@@ -168,15 +158,15 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
             serializer.startTag(null, "root");
 
             serializer.startTag(null, "name");
-            serializer.text(bpmList.getName());
+            serializer.text(listToSave.getName());
             serializer.endTag(null, "name");
 
             serializer.startTag(null, "entries");
-            serializer.text(bpmList.getEntries().toString());
+            serializer.text(listToSave.getEntries().toString());
             serializer.endTag(null, "entries");
 
             serializer.startTag(null, "listEntries");
-            for (ListEntry listEntry : bpmList.getListEntries()) {
+            for (ListEntry listEntry : listToSave.getListEntries()) {
                 serializer.startTag(null, "listEntry");
 
                 serializer.startTag(null, "listEntryNumber");
@@ -204,11 +194,11 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
             serializer.endTag(null, "listEntries");
 
             serializer.startTag(null, "creationDate");
-            serializer.text(bpmList.getCreationDate().toString());
+            serializer.text(listToSave.getCreationDate().toString());
             serializer.endTag(null, "creationDate");
 
             serializer.startTag(null, "VERSION");
-            serializer.text(bpmList.getVersion());
+            serializer.text(listToSave.getVersion());
             serializer.endTag(null, "VERSION");
 
             serializer.endTag(null, "root");
@@ -274,6 +264,7 @@ public class ListManagerActivity extends AppCompatActivity implements Listmanage
             e.printStackTrace();
         }
 
+        logic.setBpmList(bpmList);
         return bpmList;
     }
 }
