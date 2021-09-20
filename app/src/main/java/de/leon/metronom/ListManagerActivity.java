@@ -36,7 +36,7 @@ import de.leon.metronom.CustomClasses.MetronomLogic.ListManagerLogic;
 
 public class ListManagerActivity extends AppCompatActivity implements ListManagerListAdapter.ItemClickListener {
 
-    private ListManagerListAdapter adapter;
+    //private ListManagerListAdapter adapter;
     private ListManagerLogic logic;
 
     private RecyclerView listmanagerList;
@@ -64,9 +64,9 @@ public class ListManagerActivity extends AppCompatActivity implements ListManage
         deleteSelectedListBtn = (Button) findViewById(R.id.btnDeleteSelectedList);
 
         listmanagerList.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ListManagerListAdapter(this, logic.getBpmLists());
-        adapter.setClickListener(this);
-        listmanagerList.setAdapter(adapter);
+        //adapter = new ListManagerListAdapter(this, logic.getBpmLists());
+        //adapter.setClickListener(this);
+        //listmanagerList.setAdapter(adapter);
         //DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(listmanagerList.getContext(), getRequestedOrientation());
         //listmanagerList.addItemDecoration(dividerItemDecoration);
 
@@ -101,9 +101,9 @@ public class ListManagerActivity extends AppCompatActivity implements ListManage
         connectAllUiElements();
 
         listmanagerList.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ListManagerListAdapter(this, logic.getBpmLists());
-        adapter.setClickListener(this);
-        listmanagerList.setAdapter(adapter);
+        //adapter = new ListManagerListAdapter(this, logic.getBpmLists());
+        //adapter.setClickListener(this);
+        //listmanagerList.setAdapter(adapter);
         //DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(listmanagerList.getContext(), getRequestedOrientation());
         //listmanagerList.addItemDecoration(dividerItemDecoration);
     }
@@ -119,7 +119,7 @@ public class ListManagerActivity extends AppCompatActivity implements ListManage
 
     @Override
     public void onItemClick(View view, int position) {
-        logic.setSelectedList(adapter.getItem(position));
+        //logic.setSelectedList(adapter.getItem(position));
     }
 
     private void addEntry() {

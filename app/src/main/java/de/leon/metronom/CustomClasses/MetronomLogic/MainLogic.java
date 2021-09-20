@@ -33,6 +33,11 @@ public class MainLogic {
 
     private BpmList currentBpmList;
 
+    /**
+     *
+     * Logic for Main class
+     *
+     */
     public MainLogic() {
     }
 
