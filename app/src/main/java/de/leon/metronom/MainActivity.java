@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.TimerTask;
 
 import de.leon.metronom.CustomClasses.DataHolder.CountDownInputHolder;
+import de.leon.metronom.CustomClasses.MetronomLogic.BpmList.BpmList;
 import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.BpmNegativeException;
 import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.BpmNotAnIntegerException;
 import de.leon.metronom.CustomClasses.MetronomLogic.CustomExceptions.BpmNullException;
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private Button pause;
     private Button resetTimer;
     private ProgressBar progressBar;
+    private Spinner listSelection;
 
     private MainLogic logic;
     MediaPlayer mediaPlayer;
@@ -85,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
         pause = (Button) findViewById(R.id.bntPause);
         resetTimer = (Button) findViewById(R.id.btnResetTimer);
         progressBar = (ProgressBar) findViewById(R.id.prgrsbrTact);
+        listSelection = (Spinner) findViewById(R.id.listSelection);
 
         setClickListeners();
     }
@@ -232,7 +236,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startList() {
-        //todo implement
+        HashMap<MainLogic.TextFields, String> hashMap = logic.startList((BpmList) listSelection.getSelectedItem());
+        enterBpmField.setText(hashMap.get(MainLogic.TextFields.BPM));
+        enterTactField.setText(hashMap.get(MainLogic.TextFields.TACT));
+        artistFld.setText(hashMap.get(MainLogic.TextFields.ARTIST));
+        songFld.setText(hashMap.get(MainLogic.TextFields.SONG));
+
+        start();
+        startList.setText(getString(R.string.next));
     }
 
     private void next() {

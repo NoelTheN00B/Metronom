@@ -36,7 +36,7 @@ public class ListManagerListAdapter extends RecyclerView.Adapter<ListManagerList
     public void onBindViewHolder(ViewHolder holder, int position) {
         BpmList bpmList = mData.get(position);
         holder.name.setText(bpmList.getName());
-        holder.entries.setText(bpmList.getEntries());
+        holder.entries.setText(bpmList.getEntryCount());
         holder.creationDate.setText(bpmList.getCreationDate().toString());
     }
 
