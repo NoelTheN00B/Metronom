@@ -34,9 +34,7 @@ public class MainLogic {
     private BpmList currentBpmList;
 
     /**
-     *
      * Logic for Main class
-     *
      */
     public MainLogic() {
     }
@@ -160,21 +158,34 @@ public class MainLogic {
         isRunning = false;
     }
 
-    private void startList() {
-        //todo implement
+    public HashMap<TextFields, String> startList(BpmList selectedList) {
+        currentBpmList = selectedList;
+
+        HashMap<TextFields, String> hashMap = new HashMap<>();
+
+        bpm = currentBpmList.getListEntry(cntListEntry).getBPM();
+        hashMap.put(TextFields.BPM, bpm + "");
+        tact = currentBpmList.getListEntry(cntListEntry).getTact();
+        hashMap.put(TextFields.TACT, tact + "");
+        hashMap.put(TextFields.ARTIST, currentBpmList.getListEntry(cntListEntry).getArtist());
+        hashMap.put(TextFields.SONG, currentBpmList.getListEntry(cntListEntry).getSong());
+
+        isRunning = true;
+
+        return hashMap;
     }
 
     /**
      * Goes to the next Entry in the current List and returns the Values of the Entry
      *
-     * @return A HashMap with {@link TextFields} as Keys and the Values
+     * @return A HashMap with {@link TextFields} Enum as Keys and the Values
      * @throws ListEndReachedException When the end of the list is reached
      */
     public HashMap<TextFields, String> next() throws ListEndReachedException {
 
         cntListEntry++;
 
-        if (cntListEntry < currentBpmList.getEntries()) {
+        if (cntListEntry < currentBpmList.getEntryCount()) {
 
             HashMap<TextFields, String> returnHashMap = new HashMap<>();
 

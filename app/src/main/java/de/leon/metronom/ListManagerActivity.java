@@ -162,7 +162,7 @@ public class ListManagerActivity extends AppCompatActivity implements ListManage
             serializer.endTag(null, "name");
 
             serializer.startTag(null, "entries");
-            serializer.text(listToSave.getEntries().toString());
+            serializer.text(listToSave.getEntryCount().toString());
             serializer.endTag(null, "entries");
 
             serializer.startTag(null, "listEntries");

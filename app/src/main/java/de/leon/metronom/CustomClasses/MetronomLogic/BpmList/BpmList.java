@@ -9,7 +9,7 @@ public class BpmList {
 
     private List<ListEntry> listEntries = new ArrayList<>();
     private String name = "New List";
-    private Integer entries = 0;
+    private Integer entryCount = 0;
     private Date creationDate;
     private static final String VERSION = "1.0";
 
@@ -26,7 +26,7 @@ public class BpmList {
     }
 
     public BpmList(String name, List<ListEntry> listEntries) {
-        this.entries = 0;
+        this.entryCount = 0;
         this.listEntries = listEntries;
         this.name = name == null ? "New List" : name;
         generateCreationDate();
@@ -41,8 +41,8 @@ public class BpmList {
     }
 
     public void addListEntry(ListEntry listEntry) {
-        entries++;
-        listEntry.setListEntryNumber(entries);
+        entryCount++;
+        listEntry.setListEntryNumber(entryCount);
         this.listEntries.add(listEntry);
     }
 
@@ -54,7 +54,7 @@ public class BpmList {
 
     public void setListEntries(List<ListEntry> listEntries) {
         this.listEntries = new ArrayList<>();
-        this.entries = 0;
+        this.entryCount = 0;
         addListEntries(listEntries);
     }
 
@@ -82,8 +82,8 @@ public class BpmList {
         return this.creationDate;
     }
 
-    public Integer getEntries() {
-        return entries;
+    public Integer getEntryCount() {
+        return entryCount;
     }
 
     public void setCreationDate(Date creationDate) {
