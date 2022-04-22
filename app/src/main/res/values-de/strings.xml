@@ -5,12 +5,12 @@
     <string name="bpm">BPM</string>
     <string name="enter_tact">Bitte Takt eingeben</string>
     <string name="tact">Tact</string>
-    <string name="increase_bpm">BPM erhöhen</string>
+    <string name="increase_bpm">BPM erhöhen?</string>
     <string name="increase_bpm_after">BPM erhöhen nach</string>
     <string name="increase_bpm_by">BPM erhöhen um</string>
     <string name="min">Min</string>
     <string name="sec">Sek</string>
-    <string name="timer_input">Timer Input</string>
+    <string name="timer_input">Timer Eingabe</string>
     <string name="remaining_time">Verbleibende Zeit</string>
     <string name="timer_help_1">Hiermit kannst du das Metron nach einer bestimmten Zeit stoppen.</string>
     <string name="timer_help_2">0 in beiden Feldern sorgt dafür, dass das Metronom unendlich lange läuft</string>

@@ -4,7 +4,7 @@
     <string name="bpm">BPM</string>
     <string name="enter_tact">Please enter Tact</string>
     <string name="tact">Tact</string>
-    <string name="increase_bpm">Increase BPM</string>
+    <string name="increase_bpm">Increase BPM?</string>
     <string name="increase_bpm_after">Increase BPM after</string>
     <string name="increase_bpm_by">Increase BPM by</string>
     <string name="min">min</string>

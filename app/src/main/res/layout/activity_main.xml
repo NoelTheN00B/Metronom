@@ -290,7 +290,7 @@
         app:layout_constraintTop_toBottomOf="@+id/divider10" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton"
+        android:id="@+id/floatingActionButtonPlayPause"
         android:layout_width="55dp"
         android:layout_height="55dp"
         android:layout_marginEnd="8dp"
@@ -298,20 +298,22 @@
         app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:maxImageSize="35"
+        app:maxImageSize="35dp"
+        app:showMotionSpec="@android:anim/slide_in_left"
         app:srcCompat="@android:drawable/ic_media_play"
         app:useCompatPadding="true" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton2"
+        android:id="@+id/floatingActionButtonNext"
         android:layout_width="55dp"
         android:layout_height="55dp"
         android:layout_marginEnd="8dp"
         android:clickable="true"
         app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/floatingActionButton"
-        app:maxImageSize="35"
+        app:layout_constraintEnd_toStartOf="@+id/floatingActionButtonPlayPause"
+        app:maxImageSize="35dp"
+        app:showMotionSpec="@android:anim/slide_in_left"
         app:srcCompat="@android:drawable/ic_media_next"
         app:useCompatPadding="true" />
 </androidx.constraintlayout.widget.ConstraintLayout>

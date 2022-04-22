@@ -1,12 +1,15 @@
 package de.leon.metronom;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.SoundPool;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
@@ -18,11 +21,13 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.TimerTask;
 
 import de.leon.metronom.CustomClasses.DataHolder.CountDownInputHolder;
@@ -58,13 +63,22 @@ public class MainActivity extends AppCompatActivity {
     private Button resetTimer;
     private ProgressBar progressBar;
     private Spinner listSelection;
+    private FloatingActionButton floatingActionButtonPlayPause;
+    private FloatingActionButton floatingActionButtonNext;
 
     private MainLogic logic;
-    MediaPlayer mediaPlayer;
+    static MediaPlayer firstTickMP;
+    static MediaPlayer otherTickMP;
+    static SoundPool tickSP = null;
+    private HashMap<Tick, Integer> tickMap = null;
 
     MetronomeTimer bpmTimer = new MetronomeTimer();
     MetronomeTimer increaseBpmTimer = new MetronomeTimer();
     MetronomeTimer countDownTimer = new MetronomeTimer();
+
+    private boolean isPlaying = false;
+    private static int tact = 4;
+    private int cntTact = 1;
 
     public TextView getRemainingTime() {
         return remainingTime;
@@ -89,6 +103,13 @@ public class MainActivity extends AppCompatActivity {
         resetTimer = (Button) findViewById(R.id.btnResetTimer);
         progressBar = (ProgressBar) findViewById(R.id.prgrsbrTact);
         listSelection = (Spinner) findViewById(R.id.listSelection);
+        floatingActionButtonPlayPause = (FloatingActionButton) findViewById(R.id.floatingActionButtonPlayPause);
+        floatingActionButtonNext = (FloatingActionButton) findViewById(R.id.floatingActionButtonNext);
+
+
+        floatingActionButtonNext.hide();
+        firstTickMP = new MediaPlayer();
+        otherTickMP = new MediaPlayer();
 
         setClickListeners();
     }
@@ -100,6 +121,10 @@ public class MainActivity extends AppCompatActivity {
             Intent activityChangeIntent = new Intent(MainActivity.this, ListManagerActivity.class);
             MainActivity.this.startActivity(activityChangeIntent);
         });
+
+        floatingActionButtonPlayPause.setOnClickListener(v -> startPause());
+
+        floatingActionButtonNext.setOnClickListener(v -> next());
 
         //start metronome
         start.setOnClickListener(v -> start());
@@ -142,6 +167,58 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void initSoundPool() {
+
+        final int maxStreams = 5;
+        Context mContext = getApplicationContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+            AudioAttributes attributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build();
+
+            tickSP = new SoundPool.Builder()
+                    .setMaxStreams(maxStreams)
+                    .setAudioAttributes(attributes)
+                    .build();
+        } else {
+            tickSP = new SoundPool(maxStreams, AudioManager.STREAM_MUSIC, 0);
+        }
+
+        tickMap = new HashMap<>();
+        tickMap.put(Tick.FIRST_TICK, tickSP.load(mContext, R.raw.first_tick_converted, 1));
+        tickMap.put(Tick.OTHER_TICK, tickSP.load(mContext, R.raw.other_ticks_converted, 1));
+
+        try {
+            AssetFileDescriptor afdFirstTick = getAssets().openFd(logic.getFirstTickFileName());
+            AssetFileDescriptor afdOtherTick = getAssets().openFd(logic.getFirstTickFileName());
+
+            // fill your sounds
+            //tickSP.load(afdFirstTick, 1);
+            //tickSP.load(afdOtherTick, 1);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public final void cleanUpTickSP() {
+        try {
+            tickSP.release();
+        } catch (NullPointerException npe) {
+            //no SoundPool running
+        }
+        tickSP = null;
+    }
+
+    private void playTick(Tick tick) {
+        if (tickMap != null) {
+            tickSP.play(tickMap.get(tick), 1, 1, 1, 0, 1f);
+        }
+        //tickSP.release();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -172,6 +249,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void startPause() {
+        if (isPlaying) {
+            pause();
+        } else {
+            start();
+        }
+    }
+
+    @SuppressLint("UseCompatLoadingForDrawables")
     private void start() {
 
         boolean increase = switchIncreaseBPM.isActivated()
@@ -182,8 +268,15 @@ public class MainActivity extends AppCompatActivity {
             logic.start(enterBpmField.getText().toString(),
                     enterTactField.getText().toString(),
                     increase);
+            tact = Integer.parseInt(enterTactField.getText().toString());
 
-            bpmTimer.scheduleAtFixedRate(firstTick(), 0, 60000 / logic.getBpm());
+            if (tickSP == null) {
+                initSoundPool();
+                //firstTickMP = getMediaPlayer(logic.getFirstTickFileName());
+                //otherTickMP = getMediaPlayer(logic.getOtherTicksFileName());
+            }
+
+            bpmTimer.scheduleAtFixedRate(tickTask(), 0, 60000 / logic.getBpm());
 
             if (increase) {
                 increaseBPM();
@@ -195,6 +288,8 @@ public class MainActivity extends AppCompatActivity {
             progressBar.setMax(10 * logic.getTact());
             setProgressBarColor(Color.RED);
 
+            floatingActionButtonPlayPause.setImageDrawable(getResources().getDrawable(android.R.drawable.ic_media_pause));
+            isPlaying = true;
         } catch (BpmNullException e) {
             alertDialog(getString(R.string.error), getString(R.string.err_bpm_empty));
         } catch (BpmNotAnIntegerException e) {
@@ -207,6 +302,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     private void pause() {
 
         MainLogic.PauseMethodNextCall status = logic.pause();
@@ -219,9 +315,12 @@ public class MainActivity extends AppCompatActivity {
             bpmTimer.cancel();
             increaseBpmTimer.cancel();
             pause.setText(getString(R.string.resume));
+            floatingActionButtonPlayPause.setImageDrawable(getResources().getDrawable(android.R.drawable.ic_media_play));
+            isPlaying = false;
         }
     }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     private void stopAll() {
 
         bpmTimer.cancel();
@@ -233,6 +332,12 @@ public class MainActivity extends AppCompatActivity {
         songFld.setText("");
         pause.setText(getString(R.string.pause));
         startList.setText(getString(R.string.start_list));
+        floatingActionButtonPlayPause.setImageDrawable(getResources().getDrawable(android.R.drawable.ic_media_play));
+        isPlaying = false;
+        firstTickMP.release();
+        otherTickMP.release();
+        cleanUpTickSP();
+        tact = 4;
     }
 
     private void startList() {
@@ -241,6 +346,7 @@ public class MainActivity extends AppCompatActivity {
         enterTactField.setText(hashMap.get(MainLogic.TextFields.TACT));
         artistFld.setText(hashMap.get(MainLogic.TextFields.ARTIST));
         songFld.setText(hashMap.get(MainLogic.TextFields.SONG));
+        tact = Integer.parseInt(Objects.requireNonNull(hashMap.get(MainLogic.TextFields.TACT)));
 
         start();
         startList.setText(getString(R.string.next));
@@ -259,6 +365,7 @@ public class MainActivity extends AppCompatActivity {
             enterTactField.setText(hashMap.get(MainLogic.TextFields.TACT));
             artistFld.setText(hashMap.get(MainLogic.TextFields.ARTIST));
             songFld.setText(hashMap.get(MainLogic.TextFields.SONG));
+            tact = Integer.parseInt(Objects.requireNonNull(hashMap.get(MainLogic.TextFields.TACT)));
             pause.setText(R.string.pause);
             start();
 
@@ -288,44 +395,72 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private TimerTask firstTick() {
-        return new TimerTask() {
-            @Override
-            public void run() {
-
-                try {
-                    AssetFileDescriptor assetFileDescriptor = getAssets().openFd(logic.getFirstTickFileName());
-                    mediaPlayer = new MediaPlayer();
-                    mediaPlayer.setDataSource(assetFileDescriptor.getFileDescriptor(), assetFileDescriptor.getStartOffset(), assetFileDescriptor.getLength());
-                    mediaPlayer.prepare();
-                    mediaPlayer.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                bpmTimer.setTask(otherTicks());
-                setProgressBarColor(Color.RED);
-                progressBar.setProgress(10);
+    /*
+    public void playFirstTick() {
+        try {
+            if (firstTickMP.isPlaying()) {
+                firstTickMP.stop();
+                firstTickMP.release();
+                firstTickMP = new MediaPlayer();
             }
-        };
+
+            AssetFileDescriptor descriptor = getAssets().openFd(logic.getFirstTickFileName());
+            firstTickMP.setDataSource(descriptor.getFileDescriptor(), descriptor.getStartOffset(), descriptor.getLength());
+            descriptor.close();
+
+            firstTickMP.prepare();
+            firstTickMP.setVolume(1f, 1f);
+            firstTickMP.start();
+            firstTickMP.setOnCompletionListener(mp -> {
+                mp.release();
+                firstTickMP = new MediaPlayer();
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private TimerTask otherTicks() {
+    public void playOtherTick() {
+        try {
+            if (otherTickMP.isPlaying()) {
+                otherTickMP.stop();
+                otherTickMP.release();
+                otherTickMP = new MediaPlayer();
+            }
+
+            AssetFileDescriptor descriptor = getAssets().openFd(logic.getOtherTicksFileName());
+            otherTickMP.setDataSource(descriptor.getFileDescriptor(), descriptor.getStartOffset(), descriptor.getLength());
+            descriptor.close();
+
+            otherTickMP.prepare();
+            otherTickMP.setVolume(1f, 1f);
+            otherTickMP.start();
+            otherTickMP.setOnCompletionListener(mp -> {
+                mp.release();
+                otherTickMP = new MediaPlayer();
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+     */
+
+    private TimerTask tickTask() {
         return new TimerTask() {
             @Override
             public void run() {
-                try {
-                    AssetFileDescriptor assetFileDescriptor = getAssets().openFd(logic.getOtherTicksFileName());
-                    mediaPlayer = new MediaPlayer();
-                    mediaPlayer.setDataSource(assetFileDescriptor.getFileDescriptor(), assetFileDescriptor.getStartOffset(), assetFileDescriptor.getLength());
-                    mediaPlayer.prepare();
-                    mediaPlayer.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
 
-                setProgressBarColor(Color.GREEN);
-                progressBar.setProgress(progressBar.getProgress() + 10);
+                if (cntTact == tact) {
+                    cntTact = 1;
+                    playTick(Tick.FIRST_TICK);
+                } else {
+                    playTick(Tick.OTHER_TICK);
+                    cntTact++;
+                }
+                //setProgressBarColor(Color.RED);
+                //progressBar.setProgress(10);
             }
         };
     }
@@ -356,10 +491,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void setProgressBarColor(int color) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            progressBar.setProgressTintList(ColorStateList.valueOf(color));
+            //progressBar.setProgressTintList(ColorStateList.valueOf(color));
         } else {
-            progressBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            //progressBar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
         }
+    }
+
+    private enum Tick {
+        FIRST_TICK,
+        OTHER_TICK;
     }
 
 
